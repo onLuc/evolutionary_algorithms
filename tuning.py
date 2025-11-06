@@ -20,27 +20,27 @@ import json
 import numpy as np
 from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
 
-budget = 2_000_000  # (set higher for your extended experiments)
+budget = 2_000_000  # Should be 100_000 for assignment
 
 # Tuning plan
 K = 50                 # number of candidate configs
-RUNS_PER_PROBLEM = 5   # per candidate per problem
+RUNS_PER_PROBLEM = 10  # per candidate per problem
 EVALS_PER_RUN = 2_000  # budget used in each tuning run
 SEED_BASE = 42         # base seed for reproducibility
 
 # Hyperparameters to tune
 SPACE = dict(
-    pop_size=[25, 50, 75, 100, 150],
-    p_cx=[0.3, 0.5, 0.7],
+    pop_size=[30, 40, 50, 60, 70],
+    p_cx=[0.2, 0.3, 0.4, 0.5],
     mut_per_n=[0.5, 1.0, 2.0],
-    elitism=[1, 2],
+    elitism=[1, 2, 3],
     tour_k=[2, 3, 4, 5],
-    cx_type=["uniform", "one_point"],
+    cx_type=["uniform", "one_point"], # Add n-point crossover?
 )
 
 # Known optimum values for normalization
 OPTIMUM_F18 = 8.17
-OPTIMUM_F23 = 49.0
+OPTIMUM_F23 = 7.0 # n=49 means 7x7 board so optimal solution is 7
 
 def _best_y(problem):
     try:
