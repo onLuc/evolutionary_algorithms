@@ -7,38 +7,54 @@ import ioh
 from ioh import get_problem, logger, ProblemClass
 import random
 
+from numpy.ma.core import append
+from numpy.matlib import empty
+
 np.random.seed(1)
 random.seed(1)
-budget = 5000
+budget = 10000
 pop_size = 100
 dim = 50
 
-def mutate(pop):
-    pass
+def selection(pop, fitness):
+    # print(pop)
+    # print(fitness)
+    sorted_pairs = sorted(zip(pop, fitness), key=lambda x: x[1], reverse=True)
+    new_pop, _ = zip(*sorted_pairs)
+    new_pop = new_pop[:51]
+
+    return new_pop
 
 def crossover(pop):
     pass
 
-def selection(pop):
-    pass
+def mutate(pop):
+    mutation_rate = 0.05
+    new_pop = []
+    for ind in pop:
+        new_ind = []
+        for i in ind:
+            if random.random() < mutation_rate:
+                new_ind.append(i+1%2)
+            else:
+                new_ind.append(i)
+        new_pop.append(new_ind)
+
+    return new_pop
 
 def studentnumber1_studentnumber2_GA(problem: ioh.problem.PBO) -> None:
     pop = [[random.choice([0, 1]) for _ in range(dim)] for _ in range(pop_size)]
-    pop_matrix = np.array(pop, dtype=int)
-    trans_matrix = 2 * pop_matrix - 1
-    print(trans_matrix)
-    # `problem.state.evaluations` counts the number of function evaluation automatically,
-    # which is incremented by 1 whenever you call `problem(x)`.
-    # You could also maintain a counter of function evaluations if you prefer.
-    while problem.state.evaluations < budget:
-        # pop = mutate(pop)
-        # pop = crossover(pop)
-        # pop = selection(pop)
-        # please implement the mutation, crossover, selection here
 
-        # f = problem(trans_matrix)
-        fitness_values = [problem(ind) for ind in trans_matrix]
-        print(fitness_values)
+    fitness = []
+    while problem.state.evaluations < budget:
+        if fitness:
+            # print(fitness)
+            pop = selection(pop, fitness)
+            # pop = crossover(pop)
+            pop = mutate(pop)
+        # please implement the mutation, crossover, selection here
+        trans_list = [[2 * i - 1 for i in ind] for ind in pop]
+        fitness = problem(trans_list)
 
 
 def create_problem(dimension: int, fid: int) -> Tuple[ioh.problem.PBO, ioh.logger.Analyzer]:
@@ -68,10 +84,17 @@ if __name__ == "__main__":
     # create the LABS problem and the data logger
     F18, _logger = create_problem(dimension=dim, fid=18)
     # for run in range(20):
-    for run in range(1):
+
+    for run in range(20):
+        np.random.seed(1)
+        random.seed(1)
+        F18.reset()
         studentnumber1_studentnumber2_GA(F18)
-        F18.reset() # it is necessary to reset the problem after each independent run
-    _logger.close() # after all runs, it is necessary to close the logger to make sure all data are written to the folder
+
+    # for run in range(1):
+    #     studentnumber1_studentnumber2_GA(F18)
+    #     F18.reset() # it is necessary to reset the problem after each independent run
+    # _logger.close() # after all runs, it is necessary to close the logger to make sure all data are written to the folder
 
     # create the N-Queens problem and the data logger
     # F23, _logger = create_problem(dimension=49, fid=23)
