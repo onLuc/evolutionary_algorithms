@@ -1,27 +1,10 @@
-# tuning.py
-# -----------------------------------------------------------------------------
-# Hyperparameter tuning for GA.py with a strict global budget of 100,000 evaluations.
-# -----------------------------------------------------------------------------
-# This script searches for the best GA hyperparameters for BOTH problems:
-#   - F18 (LABS, bitstring autocorrelation task)
-#   - F23 (N-Queens, bit-encoded placement task)
-# Each problem has very different scales, so we normalize scores before comparing.
-#
-# Updated normalization:
-# Based on known optimum scores:
-#   - F18 (LABS, n=50) optimum = 8.17
-#   - F23 (N-Queens, n=49) optimum = 7
-# We normalize each problem's score relative to [0, optimum].
-# -----------------------------------------------------------------------------
-
 from typing import List
 from pathlib import Path
 import json
 import numpy as np
 from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
 
-# Exhaustive grid search budget is computed from SPACE, RUNS_PER_PROBLEM, and EVALS_PER_RUN.
-budget = 0
+budget = 100_000 
 
 # Tuning plan
 K = 0                  # computed after building the exhaustive grid
@@ -31,23 +14,19 @@ SEED_BASE = 42         # base seed for reproducibility
 
 # Hyperparameters to tune
 SPACE = dict(
-    pop_size=[20],
+    pop_size=[10, 20],
     p_cx=[0.7],
-    mut_per_n=[0.5, 1.0],
-    elitism=[3],
-    cx_type=["k_point"], # "uniform", "one_point", "k_point"
-    cx_k=[1],      # for k-point crossover
+    mut_per_n=[1.0, 2.0],
+    elitism=[3, 2],
+    cx_type=["k_point"], # "uniform", "k_point"
+    cx_k=[1, 2],      # for k-point crossover
     selection_type=["truncation"], # "tournament", "proportional", "rank", "truncation"
     tour_k=[3],
-    truncation_frac=[0.3, 0.4, 0.5, 0.6],
-    init_type=["biased"], # "random", "biased", "complementary"
-    init_p=[0.4, 0.5], 
+    truncation_frac=[0.3, 0.5],
+    init_type=["biased"], # "random", "biased"
+    init_p=[0.3, 0.4], 
     replacement_type=["elitism"], # "elitism", "generational"
 )
-
-# Known optimum values for normalization
-OPTIMUM_F18 = 8.17
-OPTIMUM_F23 = 7.0 # n=49 means 7x7 board so optimal solution is 7
 
 def _best_y(problem):
     try:
@@ -104,8 +83,8 @@ def evaluate_config(cfg, rng):
 
 def _normalize_known_optima(s18_all, s23_all):
     # Clip to non-negative and divide by known optima
-    s18_norm = np.clip(s18_all / OPTIMUM_F18, 0, 1)
-    s23_norm = np.clip(s23_all / OPTIMUM_F23, 0, 1)
+    s18_norm = np.clip(s18_all / 8.17, 0, 1)
+    s23_norm = np.clip(s23_all / 7.0, 0, 1)
     return s18_norm, s23_norm
 
 def tune_hyperparameters() -> List:
@@ -143,15 +122,7 @@ def tune_hyperparameters() -> List:
         },
     }
 
-    def _convert(o):
-        import numpy as _np
-        if isinstance(o, (_np.integer, _np.int_)): return int(o)
-        if isinstance(o, (_np.floating, _np.float64)): return float(o)
-        if isinstance(o, dict): return {k: _convert(v) for k, v in o.items()}
-        if isinstance(o, (list, tuple)): return [_convert(v) for v in o]
-        return o
-
-    Path("best_params.json").write_text(json.dumps(_convert(out), indent=2))
+    Path("best_params.json").write_text(json.dumps(out, indent=2))
 
     return [best_cfg.get("pop_size"), best_cfg.get("mut_per_n"), best_cfg.get("p_cx")]
 
