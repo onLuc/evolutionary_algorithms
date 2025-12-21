@@ -33,7 +33,13 @@ PARAMS = dict(
     mut_per_n=1.0,        # mutation probability per bit = mut_per_n / n
     elitism=2,
     tour_k=3,
-    cx_type="one_point",  
+    cx_type="one_point",
+    cx_k=2,               # for k-point crossover
+    selection_type="tournament",  # tournament, proportional, rank, truncation
+    truncation_frac=0.5,
+    init_type="random",   # random, biased, complementary
+    init_p=0.5,           # for biased init: probability of 1
+    replacement_type="elitism",  # elitism or generational
     seed=42,
     budget=budget,        # evaluations per run
 )
@@ -72,14 +78,52 @@ def studentnumber1_studentnumber2_GA(problem: "ioh.problem.PBO") -> None:
     p_cx = float(PARAMS["p_cx"])
     p_mut = float(PARAMS["mut_per_n"]) / float(n)
     max_evals = int(PARAMS["budget"])
+    selection_type = PARAMS.get("selection_type", "tournament")
+    truncation_frac = float(PARAMS.get("truncation_frac", 0.5))
+    init_type = PARAMS.get("init_type", "random")
+    init_p = float(PARAMS.get("init_p", 0.5))
+    replacement_type = PARAMS.get("replacement_type", "elitism")
 
     # ---- initialization
-    pop = rng.integers(0, 2, size=(pop_size, n), dtype=np.uint8)
+    if init_type == "biased":
+        pop = (rng.random((pop_size, n)) < init_p).astype(np.uint8)
+    elif init_type == "complementary":
+        half = pop_size // 2
+        base = rng.integers(0, 2, size=(half, n), dtype=np.uint8)
+        comp = 1 - base
+        if pop_size % 2 == 0:
+            pop = np.vstack([base, comp])
+        else:
+            extra = rng.integers(0, 2, size=(1, n), dtype=np.uint8)
+            pop = np.vstack([base, comp, extra])
+    else:
+        pop = rng.integers(0, 2, size=(pop_size, n), dtype=np.uint8)
     fit = np.empty(pop_size, dtype=float)
     for i in range(pop_size):
         fit[i] = problem(pop[i].tolist())
 
-    def select_tournament() -> np.ndarray:
+    def _roulette(weights: np.ndarray) -> int:
+        total = float(np.sum(weights))
+        if total <= 0.0:
+            return int(rng.integers(0, pop_size))
+        probs = weights / total
+        return int(rng.choice(pop_size, p=probs))
+
+    def select_parent() -> np.ndarray:
+        if selection_type == "proportional":
+            weights = np.maximum(fit, 0.0)
+            return pop[_roulette(weights)]
+        if selection_type == "rank":
+            order = np.argsort(fit)
+            ranks = np.empty(pop_size, dtype=float)
+            ranks[order] = np.arange(1, pop_size + 1, dtype=float)
+            return pop[_roulette(ranks)]
+        if selection_type == "truncation":
+            m = max(1, int(np.ceil(truncation_frac * pop_size)))
+            order = np.argsort(fit)
+            top_idx = order[-m:]
+            return pop[int(rng.choice(top_idx))]
+        # default: tournament
         idx = rng.integers(0, pop_size, size=tour_k)
         f = fit[idx]
         return pop[idx[np.argmax(f)]]
@@ -95,6 +139,25 @@ def studentnumber1_studentnumber2_GA(problem: "ioh.problem.PBO") -> None:
             child = np.empty_like(p1)
             child[:cut] = p1[:cut]
             child[cut:] = p2[cut:]
+            return child
+        if ctype == "k_point":
+            k = int(PARAMS.get("cx_k", 2))
+            k = max(1, min(k, n - 1))
+            cuts = np.sort(rng.choice(np.arange(1, n), size=k, replace=False))
+            child = np.empty_like(p1)
+            last = 0
+            use_p1 = True
+            for c in cuts:
+                if use_p1:
+                    child[last:c] = p1[last:c]
+                else:
+                    child[last:c] = p2[last:c]
+                use_p1 = not use_p1
+                last = c
+            if use_p1:
+                child[last:] = p1[last:]
+            else:
+                child[last:] = p2[last:]
             return child
         else:
             # default: uniform
@@ -115,7 +178,7 @@ def studentnumber1_studentnumber2_GA(problem: "ioh.problem.PBO") -> None:
         off = np.empty((lambda_target, n), dtype=np.uint8)
 
         for i in range(lambda_target):
-            p1, p2 = select_tournament(), select_tournament()
+            p1, p2 = select_parent(), select_parent()
             child = crossover(p1, p2)
             child = mutate_bitflip(child)
             off[i] = child
@@ -124,10 +187,15 @@ def studentnumber1_studentnumber2_GA(problem: "ioh.problem.PBO") -> None:
         for i in range(lambda_target):
             off_fit[i] = problem(off[i].tolist())
 
+        if replacement_type == "generational":
+            pop = off
+            fit = off_fit
+            continue
+
         order = np.argsort(fit)
-        elite_idx = order[-elitism:]
-        survivors = pop[elite_idx]
-        survivors_fit = fit[elite_idx]
+        elite_idx = order[-elitism:] if elitism > 0 else np.array([], dtype=int)
+        survivors = pop[elite_idx] if elitism > 0 else np.empty((0, n), dtype=np.uint8)
+        survivors_fit = fit[elite_idx] if elitism > 0 else np.empty((0,), dtype=float)
 
         pop = np.vstack([survivors, off])
         fit = np.concatenate([survivors_fit, off_fit])

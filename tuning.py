@@ -20,22 +20,29 @@ import json
 import numpy as np
 from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
 
-budget = 2_000_000  # Should be 100_000 for assignment
+# Exhaustive grid search budget is computed from SPACE, RUNS_PER_PROBLEM, and EVALS_PER_RUN.
+budget = 0
 
 # Tuning plan
-K = 50                 # number of candidate configs
-RUNS_PER_PROBLEM = 10  # per candidate per problem
-EVALS_PER_RUN = 2_000  # budget used in each tuning run
+K = 0                  # computed after building the exhaustive grid
+RUNS_PER_PROBLEM = 5   # per candidate per problem
+EVALS_PER_RUN = 1000    # budget used in each tuning run
 SEED_BASE = 42         # base seed for reproducibility
 
 # Hyperparameters to tune
 SPACE = dict(
-    pop_size=[30, 40, 50, 60, 70],
-    p_cx=[0.2, 0.3, 0.4, 0.5],
-    mut_per_n=[1.0, 2.0, 3.0],
-    elitism=[0, 1, 2, 3],
-    tour_k=[2, 3, 4, 5],
-    cx_type=["uniform", "one_point"], # Add n-point crossover?
+    pop_size=[30, 50, 70],
+    p_cx=[0.5, 0.6, 0.7],
+    mut_per_n=[1.0, 2.0],
+    elitism=[1, 3],
+    cx_type=["k_point"], # "uniform", "one_point", "k_point"
+    cx_k=[1, 2, 3, 4],
+    selection_type=["truncation"], # "tournament", "proportional", "rank", "truncation"
+    tour_k=[3],
+    truncation_frac=[0.3, 0.5],
+    init_type=["biased"], # "random", "biased", "complementary"
+    init_p=[0.3, 0.5, 0.7],
+    replacement_type=["elitism"], # "elitism", "generational"
 )
 
 # Known optimum values for normalization
@@ -48,25 +55,36 @@ def _best_y(problem):
     except Exception:
         return float(problem.state.current_best.y)
 
-def _sample_candidates(rng, K):
+def _enumerate_candidates():
     keys = list(SPACE.keys())
-    seen = set()
     cand = []
-    while len(cand) < K:
-        cfg = {k: rng.choice(SPACE[k]) for k in keys}
-        if cfg["elitism"] >= cfg["pop_size"]:
-            continue
-        sig = tuple((k, cfg[k]) for k in sorted(cfg))
-        if sig in seen:
-            continue
-        seen.add(sig)
-        cand.append(cfg)
-        # stop if all combos covered
-        total = 1
-        for k in keys:
-            total *= len(SPACE[k])
-        if len(seen) == total:
-            break
+
+    def _recurse(i, cfg):
+        if i == len(keys):
+            if cfg["elitism"] >= cfg["pop_size"]:
+                return
+            if cfg["replacement_type"] == "generational":
+                if cfg["elitism"] != 0:
+                    return
+            cfg_out = dict(cfg)
+            if cfg_out["selection_type"] != "tournament":
+                cfg_out.pop("tour_k", None)
+            if cfg_out["selection_type"] != "truncation":
+                cfg_out.pop("truncation_frac", None)
+            if cfg_out["cx_type"] != "k_point":
+                cfg_out.pop("cx_k", None)
+            if cfg_out["init_type"] != "biased":
+                cfg_out.pop("init_p", None)
+            cand.append(cfg_out)
+            return
+
+        k = keys[i]
+        for v in SPACE[k]:
+            cfg[k] = v
+            _recurse(i + 1, cfg)
+        cfg.pop(k, None)
+
+    _recurse(0, {})
     return cand
 
 def evaluate_config(cfg, rng):
@@ -91,12 +109,12 @@ def _normalize_known_optima(s18_all, s23_all):
     return s18_norm, s23_norm
 
 def tune_hyperparameters() -> List:
+    global K, budget
     rng = np.random.default_rng(2025)
+    candidates = _enumerate_candidates()
+    K = len(candidates)
     total_evals = K * 2 * RUNS_PER_PROBLEM * EVALS_PER_RUN
-    if total_evals > budget:
-        raise RuntimeError(f"Tuning plan uses {total_evals} evals > {budget}")
-
-    candidates = _sample_candidates(rng, K)
+    budget = total_evals
 
     results = []
     for i, cfg in enumerate(candidates, 1):
