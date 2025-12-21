@@ -26,22 +26,22 @@ budget = 0
 # Tuning plan
 K = 0                  # computed after building the exhaustive grid
 RUNS_PER_PROBLEM = 5   # per candidate per problem
-EVALS_PER_RUN = 1000    # budget used in each tuning run
+EVALS_PER_RUN = 5000    # budget used in each tuning run
 SEED_BASE = 42         # base seed for reproducibility
 
 # Hyperparameters to tune
 SPACE = dict(
-    pop_size=[30, 50, 70],
-    p_cx=[0.5, 0.6, 0.7],
-    mut_per_n=[1.0, 2.0],
-    elitism=[1, 3],
+    pop_size=[20],
+    p_cx=[0.7],
+    mut_per_n=[0.5, 1.0],
+    elitism=[3],
     cx_type=["k_point"], # "uniform", "one_point", "k_point"
-    cx_k=[1, 2, 3, 4],
+    cx_k=[1],      # for k-point crossover
     selection_type=["truncation"], # "tournament", "proportional", "rank", "truncation"
     tour_k=[3],
-    truncation_frac=[0.3, 0.5],
+    truncation_frac=[0.3, 0.4, 0.5, 0.6],
     init_type=["biased"], # "random", "biased", "complementary"
-    init_p=[0.3, 0.5, 0.7],
+    init_p=[0.4, 0.5], 
     replacement_type=["elitism"], # "elitism", "generational"
 )
 

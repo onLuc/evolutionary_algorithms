@@ -17,9 +17,9 @@
     "F23_median": 7.0
   },
   "plan": {
-    "K": 16,
+    "K": 1152,
     "RUNS_PER_PROBLEM": 5,
     "EVALS_PER_RUN": 5000,
-    "total_evaluations": 800000
+    "total_evaluations": 57600000
   }
 }
