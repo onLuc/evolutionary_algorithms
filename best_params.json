@@ -13,13 +13,13 @@
     "replacement_type": "elitism"
   },
   "scores": {
-    "F18_median": 4.863813229571984,
-    "F23_median": 7.0
+    "F18_median": 3.9936102236421727,
+    "F23_median": 5.0
   },
   "plan": {
-    "K": 1152,
-    "RUNS_PER_PROBLEM": 5,
-    "EVALS_PER_RUN": 5000,
-    "total_evaluations": 57600000
+    "K": 1,
+    "RUNS_PER_PROBLEM": 3,
+    "EVALS_PER_RUN": 2000,
+    "total_evaluations": 12000
   }
 }

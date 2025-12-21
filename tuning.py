@@ -1,38 +1,33 @@
 from typing import List
 from pathlib import Path
 import json
+import random
 import numpy as np
 from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
 
-budget = 100_000 
+budget = 100_000 # 100_000 for assignment
 
 # Tuning plan
-K = 0                  # computed after building the exhaustive grid
-RUNS_PER_PROBLEM = 5   # per candidate per problem
-EVALS_PER_RUN = 5000    # budget used in each tuning run
-SEED_BASE = 42         # base seed for reproducibility
+K = 1                  # K configurations to evaluate (randomly sampled from SPACE)
+RUNS_PER_PROBLEM = 3   # per configuration per problem
+EVALS_PER_RUN = 2000   # budget used in each run
+SEED_BASE = 42         # random seed
 
-# Hyperparameters to tune
+# Hyperparameter search space
 SPACE = dict(
-    pop_size=[10, 20],
-    p_cx=[0.7],
-    mut_per_n=[1.0, 2.0],
-    elitism=[3, 2],
-    cx_type=["k_point"], # "uniform", "k_point"
-    cx_k=[1, 2],      # for k-point crossover
-    selection_type=["truncation"], # "tournament", "proportional", "rank", "truncation"
-    tour_k=[3],
-    truncation_frac=[0.3, 0.5],
-    init_type=["biased"], # "random", "biased"
-    init_p=[0.3, 0.4], 
-    replacement_type=["elitism"], # "elitism", "generational"
+    pop_size=[20],                  # population size
+    p_cx=[0.7],                     # crossover probability
+    mut_per_n=[1.0],                # mutation rate (per n)
+    elitism=[3],                    # number of elite individuals
+    cx_type=["k_point"],            # "uniform", "k_point"
+    cx_k=[1],                       # for k-point crossover
+    selection_type=["truncation"],  # "tournament", "proportional", "rank", "truncation"
+    tour_k=[3],                     # for tournament selection
+    truncation_frac=[0.5],          # for truncation selection
+    init_type=["biased"],           # "random", "biased"
+    init_p=[0.4],                   # for biased initialization
+    replacement_type=["elitism"],   # "elitism", "generational"
 )
-
-def _best_y(problem):
-    try:
-        return float(problem.state.best.y)
-    except Exception:
-        return float(problem.state.current_best.y)
 
 def _enumerate_candidates():
     keys = list(SPACE.keys())
@@ -75,7 +70,10 @@ def evaluate_config(cfg, rng):
             prob, log = create_problem(dimension=dim, fid=fid)
             set_params(**cfg, budget=EVALS_PER_RUN, seed=SEED_BASE + r)
             studentnumber1_studentnumber2_GA(prob)
-            vals.append(_best_y(prob))
+            try:
+                vals.append(prob.state.best.y)
+            except Exception:
+                vals.append(prob.state.current_best.y)
             prob.reset()
             log.close()
         scores.append(float(np.median(vals)))
@@ -89,12 +87,15 @@ def _normalize_known_optima(s18_all, s23_all):
 
 def tune_hyperparameters() -> List:
     global K, budget
-    rng = np.random.default_rng(2025)
-    candidates = _enumerate_candidates()
-    K = len(candidates)
-    total_evals = K * 2 * RUNS_PER_PROBLEM * EVALS_PER_RUN
-    budget = total_evals
+    rng = np.random.default_rng(SEED_BASE)
+    random.seed(SEED_BASE)
 
+    total_evals = K * 2 * RUNS_PER_PROBLEM * EVALS_PER_RUN
+
+    if total_evals > budget:
+        raise ValueError(f"Total evaluations {total_evals} exceed budget {budget}")
+
+    candidates = random.sample(_enumerate_candidates(), K)
     results = []
     for i, cfg in enumerate(candidates, 1):
         s18, s23 = evaluate_config(cfg, rng)

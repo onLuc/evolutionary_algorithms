@@ -7,17 +7,17 @@ from ioh import get_problem, logger, ProblemClass
 budget = 5_000 # per run
 
 PARAMS = dict(
-    pop_size=50,          # population size
-    p_cx=0.5,             # crossover probability
+    pop_size=20,          # population size
+    p_cx=0.7,             # crossover probability
     mut_per_n=1.0,        # mutation probability per bit = mut_per_n / n
-    elitism=2,
+    elitism=3,
     tour_k=3,
-    cx_type="one_point",
-    cx_k=2,               # for k-point crossover
-    selection_type="tournament",  # tournament, proportional, rank, truncation
+    cx_type="k_point",  # uniform, k_point
+    cx_k=1,               # for k-point crossover
+    selection_type="truncation",  # tournament, proportional, rank, truncation
     truncation_frac=0.5,
-    init_type="random",   # random, biased, complementary
-    init_p=0.5,           # for biased init: probability of 1
+    init_type="biased",   # random, biased
+    init_p=0.4,           # for biased init
     replacement_type="elitism",  # elitism or generational
     seed=42,
     budget=budget,        # evaluations per run
