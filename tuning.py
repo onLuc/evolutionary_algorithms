@@ -10,7 +10,7 @@
 # Updated normalization:
 # Based on known optimum scores:
 #   - F18 (LABS, n=50) optimum = 8.17
-#   - F23 (N-Queens, n=49) optimum = 49
+#   - F23 (N-Queens, n=49) optimum = 7
 # We normalize each problem's score relative to [0, optimum].
 # -----------------------------------------------------------------------------
 
@@ -32,8 +32,8 @@ SEED_BASE = 42         # base seed for reproducibility
 SPACE = dict(
     pop_size=[30, 40, 50, 60, 70],
     p_cx=[0.2, 0.3, 0.4, 0.5],
-    mut_per_n=[0.5, 1.0, 2.0],
-    elitism=[1, 2, 3],
+    mut_per_n=[1.0, 2.0, 3.0],
+    elitism=[0, 1, 2, 3],
     tour_k=[2, 3, 4, 5],
     cx_type=["uniform", "one_point"], # Add n-point crossover?
 )
