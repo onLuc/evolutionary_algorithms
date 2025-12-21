@@ -39,10 +39,11 @@ def recombine(pop):
     # Global intermediate recombination
     to_mean_x = [ind["x"] for ind in pop]
     to_mean_sigmas = [ind["sigmas"] for ind in pop]
-    to_mean_alphas = [ind["alphas"] for ind in pop]
+    # to_mean_alphas = [ind["alphas"] for ind in pop]
     return {"x": np.mean(to_mean_x, axis=0),
             "sigmas": np.mean(to_mean_sigmas, axis=0),
-            "alphas": np.mean(to_mean_alphas, axis=0)}
+            # "alphas": np.mean(to_mean_alphas, axis=0)
+            }
 
 def recombine_n(pop, n):
     p1, p2 = np.random.choice(pop, n, replace=False)
@@ -66,33 +67,34 @@ def recombine_n(pop, n):
 #
 #     return new_pop
 
-def mutate(ind, n_children):
+def mutate(ind):
     pop = []
-    for _ in range(n_children):
-        x, sigmas, alphas = ind['x'], ind['sigmas'], ind['alphas']
+    for _ in range(lambd):
+        x, sigmas = ind['x'], ind['sigmas']
 
         common_noise = tau_prime * np.random.normal(0, 1)
         new_sigmas = sigmas * np.exp(common_noise + tau * np.random.normal(0, 1, dimension))
         new_sigmas = np.maximum(new_sigmas, 1e-6)
 
-        new_alphas = alphas + np.random.normal(0, 1, n_angles)
+        # new_alphas = alphas + np.random.normal(0, 1, n_angles)
         # new_alphas = alphas + beta * np.random.normal(0, 1, n_angles)
 
 
-        C = build_covariance_matrix(new_sigmas, new_alphas)
+        # C = build_covariance_matrix(new_sigmas, new_alphas)
         # Sampling N(0, C)
-        try:
-            vals, vecs = np.linalg.eigh(C)
-            # Ensure no negative eigenvalues due to precision
-            A = vecs @ np.diag(np.sqrt(np.maximum(vals, 0)))
-            dx = A @ np.random.normal(0, 1, dimension)
-        except np.linalg.LinAlgError:
-            print(RaiseNotImplementedError)
-            # Fallback if matrix is not positive definite
-            dx = new_sigmas * np.random.normal(0, 1, dimension)
+        # try:
+        #     vals, vecs = np.linalg.eigh(C)
+        #     # Ensure no negative eigenvalues due to precision
+        #     A = vecs @ np.diag(np.sqrt(np.maximum(vals, 0)))
+        #     dx = A @ np.random.normal(0, 1, dimension)
+        # except np.linalg.LinAlgError:
+        #     print(RaiseNotImplementedError)
+        #     # Fallback if matrix is not positive definite
+        dx = new_sigmas * np.random.normal(0, 1, dimension)
 
         new_x = np.clip(x + dx, -5, 5)
-        pop.append({'x': new_x, 'sigmas': new_sigmas, 'alphas': new_alphas})
+        pop.append({'x': new_x,
+                    'sigmas': new_sigmas})
 
     return pop
 
@@ -101,7 +103,9 @@ def evaluate(pop, problem):
     performance = []
     for ind in pop:
         f = problem(ind["x"])
-        performance.append({"x": ind["x"], "sigmas": ind["sigmas"], "alphas": ind["alphas"], "f": f})
+        performance.append({"x": ind["x"],
+                            "sigmas": ind["sigmas"],
+                            "f": f})
 
     return performance
 
@@ -135,25 +139,26 @@ def studentnumber1_studentnumber2_ES(problem):
         pop.append({
             'x': np.random.uniform(-5, 5, dimension),
             'sigmas': np.ones(dimension) * 0.2,
-            'alphas': np.zeros(n_angles)
         })
     # problem(pop)
     top_performers = []
     best_so_far = np.inf
+    successes = 0
     while problem.state.evaluations < budget:
         # print(problem.optimum)
-        # parent = recombine(pop) # takes all mu parents to create a single global intermediate
-        offspring = []
-        for _ in range(lambd):
-            parent = recombine_n(pop, 2)
-            offspring.append(mutate(parent, n_children=1)[0])
-        # pop = mutate(offspring)
-        performance = evaluate(offspring, problem)
+        parent = recombine(pop) # takes all mu parents to create a single global intermediate
+        # offspring = []
+        # for _ in range(lambd):
+        #     parent = recombine_n(pop, 2)
+        #     offspring.append(mutate(parent, n_children=1)[0])
+        pop = mutate(parent)
+        # print(pop)
+        performance = evaluate(pop, problem)
         # pop = mutation(pop, sigma, c) # creates lambda offspring by sampling normal distribution lambda times
         top_performer, pop = select(performance)
         best_so_far = min(top_performer, best_so_far)
         # print(top_y)
-        top_performers.append(best_so_far)
+        top_performers.append(top_performer)
 
     plot_top_performers(top_performers)
 
