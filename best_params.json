@@ -1,7 +1,7 @@
 {
   "best_config": {
     "pop_size": 20,
-    "p_cx": 0.7,
+    "p_cx": 0.9,
     "mut_per_n": 1.0,
     "elitism": 3,
     "cx_type": "k_point",
@@ -13,13 +13,13 @@
     "replacement_type": "elitism"
   },
   "scores": {
-    "F18_median": 3.9936102236421727,
-    "F23_median": 5.0
+    "F18_median": 3.315649867374005,
+    "F23_median": 7.0
   },
   "plan": {
-    "K": 1,
-    "RUNS_PER_PROBLEM": 3,
-    "EVALS_PER_RUN": 2000,
-    "total_evaluations": 12000
+    "K": 10,
+    "RUNS_PER_PROBLEM": 5,
+    "EVALS_PER_RUN": 1000,
+    "total_evaluations": 100000
   }
 }

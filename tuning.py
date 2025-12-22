@@ -8,21 +8,21 @@ from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
 budget = 100_000 # 100_000 for assignment
 
 # Tuning plan
-K = 1                  # K configurations to evaluate (randomly sampled from SPACE)
-RUNS_PER_PROBLEM = 3   # per configuration per problem
-EVALS_PER_RUN = 2000   # budget used in each run
+K = 10                  # K configurations to evaluate (randomly sampled from SPACE)
+RUNS_PER_PROBLEM = 5   # per configuration per problem
+EVALS_PER_RUN = 1000   # budget used in each run
 SEED_BASE = 42         # random seed
 
 # Hyperparameter search space
 SPACE = dict(
-    pop_size=[20],                  # population size
-    p_cx=[0.7],                     # crossover probability
+    pop_size=[20, 30, 50],                  # population size
+    p_cx=[0.7, 0.9],                     # crossover probability
     mut_per_n=[1.0],                # mutation rate (per n)
     elitism=[3],                    # number of elite individuals
     cx_type=["k_point"],            # "uniform", "k_point"
-    cx_k=[1],                       # for k-point crossover
-    selection_type=["truncation"],  # "tournament", "proportional", "rank", "truncation"
-    tour_k=[3],                     # for tournament selection
+    cx_k=[1, 2],                       # for k-point crossover
+    selection_type=["truncation", "tournament"],  # "tournament", "proportional", "rank", "truncation"
+    tour_k=[3, 5],                     # for tournament selection
     truncation_frac=[0.5],          # for truncation selection
     init_type=["biased"],           # "random", "biased"
     init_p=[0.4],                   # for biased initialization
