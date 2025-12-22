@@ -224,6 +224,7 @@ if __name__ == "__main__":
     _logger.close()
 
     scores = np.array(final_scores, dtype=float)
+    print("Theoretical best:", F23.optimum.y)
     print("\n=== Final best-so-far after budget (per run) ===")
     print(f"Runs:   {N_RUNS}")
     print(f"Mean:   {scores.mean():.6f}")
