@@ -25,9 +25,8 @@ SIGMA0 = 0.03
 EIGENVAL_FLOOR = 1e-20
 C_JITTER = 1e-14
 
-# --- Plotting / output ---
+# --- Plotting  ---
 PLOT_SHOW_EACH_RUN = False
-PRINT_RUN_STATS = True  # print overall stats after N_RUNS
 
 
 # ----------------------------
@@ -224,12 +223,11 @@ if __name__ == "__main__":
 
     _logger.close()
 
-    if PRINT_RUN_STATS:
-        scores = np.array(final_scores, dtype=float)
-        print("\n=== Final best-so-far after budget (per run) ===")
-        print(f"Runs:   {N_RUNS}")
-        print(f"Mean:   {scores.mean():.6f}")
-        print(f"Median: {np.median(scores):.6f}")
-        print(f"Std:    {scores.std(ddof=1):.6f}")
-        print(f"Min:    {scores.min():.6f}")
-        print(f"Max:    {scores.max():.6f}")
+    scores = np.array(final_scores, dtype=float)
+    print("\n=== Final best-so-far after budget (per run) ===")
+    print(f"Runs:   {N_RUNS}")
+    print(f"Mean:   {scores.mean():.6f}")
+    print(f"Median: {np.median(scores):.6f}")
+    print(f"Std:    {scores.std(ddof=1):.6f}")
+    print(f"Min:    {scores.min():.6f}")
+    print(f"Max:    {scores.max():.6f}")
