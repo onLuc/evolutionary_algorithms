@@ -48,7 +48,7 @@ def create_problem(dimension: int, fid: int) -> Tuple[ioh.problem.PBO, ioh.logge
 # Core GA
 # =============================
 
-def studentnumber1_studentnumber2_GA(problem: "ioh.problem.PBO") -> None:
+def s3774740_s2978466_GA(problem: "ioh.problem.PBO") -> None:
     # Params
     rng = np.random.default_rng(int(PARAMS["seed"]))
     n = int(problem.meta_data.n_variables)
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         for r in range(runs):
             set_params(seed=seed_base + r)
             problem.reset()
-            studentnumber1_studentnumber2_GA(problem)
+            s3774740_s2978466_GA(problem)
             try:
                 best_val = float(problem.state.best.y)
             except Exception:

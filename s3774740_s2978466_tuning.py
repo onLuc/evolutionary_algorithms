@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import random
 import numpy as np
-from GA import set_params, studentnumber1_studentnumber2_GA, create_problem
+from s3774740_s2978466_GA import set_params, s3774740_s2978466_GA, create_problem
 
 budget = 100_000 # 100_000 for assignment
 
@@ -69,7 +69,7 @@ def evaluate_config(cfg, rng):
         for r in range(RUNS_PER_PROBLEM):
             prob, log = create_problem(dimension=dim, fid=fid)
             set_params(**cfg, budget=EVALS_PER_RUN, seed=SEED_BASE + r)
-            studentnumber1_studentnumber2_GA(prob)
+            s3774740_s2978466_GA(prob)
             try:
                 vals.append(prob.state.best.y)
             except Exception:
