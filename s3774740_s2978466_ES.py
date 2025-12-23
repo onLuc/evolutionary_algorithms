@@ -33,7 +33,7 @@ PLOT_SHOW_EACH_RUN = False
 # Utilities
 # ----------------------------
 def reflect_bounds(x: np.ndarray, lb: float, ub: float) -> np.ndarray:
-    """Mirror-reflect x into [lb, ub] (less distorting than clip)."""
+    """Mirror-reflect x into [lb, ub]."""
     w = ub - lb
     y = (x - lb) % (2 * w)              # map to [0, 2w)
     y = np.where(y > w, 2 * w - y, y)   # reflect second half
@@ -41,7 +41,6 @@ def reflect_bounds(x: np.ndarray, lb: float, ub: float) -> np.ndarray:
 
 
 def evaluate(pop, problem):
-    """Reused shape from your code: list[dict] -> list[dict] with fitness."""
     performance = []
     for ind in pop:
         f = problem(ind["x"])  # consumes 1 evaluation
@@ -96,7 +95,7 @@ def eigen_decomposition(C):
 
 
 def sample_offspring(mean, sigma, B, D, n_offspring, rng):
-    """Sample offspring and reflect into bounds (unchanged)."""
+    """Sample offspring and reflect into bounds."""
     pop = []
     for _ in range(n_offspring):
         z = rng.normal(0.0, 1.0, size=DIMENSION)
