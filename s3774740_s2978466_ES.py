@@ -108,7 +108,7 @@ def sample_offspring(mean, sigma, B, D, n_offspring, rng):
     return pop
 
 
-def studentnumber1_studentnumber2_ES(problem, rng: np.random.Generator):
+def s3774740_s2978466_ES(problem, rng: np.random.Generator):
     """
     CMA-ES (μ/λ)-ES:
     - mean m
@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
     for run in range(N_RUNS):
         rng = np.random.default_rng(SEED + run)
-        best = studentnumber1_studentnumber2_ES(F23, rng=rng)
+        best = s3774740_s2978466_ES(F23, rng=rng)
         final_scores.append(best)
         F23.reset()
 
